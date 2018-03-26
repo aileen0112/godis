@@ -1,14 +1,30 @@
-package main
+package client
 
 import (
 	"bufio"
 	"fmt"
+	"godis/command"
 	"godis/protocol"
 	"log"
 	"net"
 	"os"
 	"strings"
 )
+
+//GodisCliend connect client
+type GodisClient struct {
+	Cmd  *command.GodisCommand
+	Argv []string
+	Argc int
+}
+
+func InitClient(argv []string, argc int) GodisClient {
+	//cmd = command.Search(argv[0])
+	cmd := command.InitCommand(argv, argc)
+	fmt.Println(cmd, "initcommand of initclient")
+	client := GodisClient{cmd, argv, argc}
+	return client
+}
 
 func main() {
 	server := "127.0.0.1:2046"
