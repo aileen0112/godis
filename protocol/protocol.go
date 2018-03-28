@@ -25,7 +25,7 @@ func Cmd2Protocol(cmd string) string {
 
 //Protocol2Args reverse of Cmd2Protocol
 func Protocol2Args(protocol string) (argv []string, argc int) {
-	parts := strings.Split(protocol, "\r\n")
+	parts := strings.Split(strings.Trim(protocol, " "), "\r\n")
 	if len(parts) == 0 {
 		//errors.New("invalid proto 1")
 		log.Println("invalid")
@@ -37,6 +37,7 @@ func Protocol2Args(protocol string) (argv []string, argc int) {
 	}
 	j := 0
 	var vlen []int
+	fmt.Println(protocol, parts)
 	for _, v := range parts[1:] {
 		if len(v) == 0 {
 			continue
@@ -48,11 +49,12 @@ func Protocol2Args(protocol string) (argv []string, argc int) {
 				vlen = append(vlen, tmpl)
 			}
 		} else {
-			if vlen[j] == len(v) {
+			fmt.Println("before :", vlen, v, argv)
+			if j < len(vlen) && vlen[j] == len(v) {
 				j++
 				argv = append(argv, v)
 			}
-			fmt.Println("argv:", vlen, v, argv)
+			fmt.Println("after :", vlen, v, argv)
 		}
 	}
 	fmt.Println(argc, argv, parts)
