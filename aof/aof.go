@@ -24,3 +24,20 @@ func AppendToFile(fileName string, content string) error {
 	defer f.Close()
 	return err
 }
+
+//ReadToDb pas AOF file to db data
+func ReadToDb(fileName string) error {
+	// 以只写的模式，打开文件
+	f, err := os.OpenFile(fileName, os.O_WRONLY, 0644)
+	if err != nil {
+		fmt.Println("aof file error" + err.Error())
+	} else {
+
+		n, _ := f.Seek(0, os.SEEK_END)
+	}
+	defer f.Close()
+	return err
+}
+
+func readLines(fp os.File n int) string{
+}
