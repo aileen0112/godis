@@ -1,10 +1,11 @@
 package aof
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
-	"strings"
 	"syscall"
 )
 
@@ -36,20 +37,50 @@ func FileToPro(fileName string) []string {
 	}
 	defer f.Close()
 	content, err := ioutil.ReadFile(fileName)
+	if err != nil {
+		fmt.Println("aof file error" + err.Error())
+	}
+	//ret := bytes.Split(content, []byte("*"))
+	ret := bytes.Split(content, []byte{'*'})
+	pros := make([]string, len(ret)-1)
+	for k, v := range ret[1:] {
+		log.Println("split result", k, v)
+		tmp := append([]byte{'*'}, v...)
+		log.Println("convert result", tmp)
+		pros = append(pros, "*"+string(v))
+		log.Println("string result", pros[k])
+	}
+	os.Exit(0)
+	return pros
+}
+
+/*
+//FileToPro pas AOF file to db data
+func FileToPro(fileName string) []string {
+	// 以只写的模式，打开文件
+	f, err := os.Open(fileName)
+	if err != nil {
+		fmt.Println("aof file error" + err.Error())
+	}
+	defer f.Close()
+	content, err := ioutil.ReadFile(fileName)
+	log.Println(content)
+	os.Exit(0)
 	str := string(content)
 	if err != nil {
 		fmt.Println("aof file error" + err.Error())
 	}
 	//ret := bytes.Split(content, []byte("*"))
 	ret := strings.Split(str, "*")
-	/*
-		pros := new([]string)
-		for k, v := range ret[1:] {
-			pros[k] = '*' + v
-		}
-	*/
+	//pros := new([]string)
+	for k, v := range ret[1:] {
+		log.Println("split result", k, v)
+		//pros[k] = '*' + v
+	}
+	os.Exit(0)
 	return ret[1:]
 }
+*/
 
 /*
 func readLines(fp os.File n int) string{
