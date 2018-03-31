@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"godis/aof"
 	"godis/db"
 	"godis/protocol"
 	"log"
@@ -14,15 +15,15 @@ import (
 
 //RedisServer struct
 type RedisServer struct {
-	db    *db.RedisDb
-	dbnum int
+	db     *db.RedisDb
+	dbnum  int
+	AofBuf []string
 }
 
 func main() {
 	//var k = init()
-	server := new(RedisServer)
-	server.db = start()
-	fmt.Println(server, "server")
+	server := initServer()
+	log.Println("server init fin, ok")
 	netListen, err := net.Listen("tcp", "127.0.0.1:2046")
 	if err != nil {
 		log.Print("listen err")
@@ -54,35 +55,26 @@ func handler(conn net.Conn, server *RedisServer) {
 			return
 		}
 		fmt.Println(n, conn.RemoteAddr().String(), conn.LocalAddr().String(), string(buff))
-		do(string(buff), server)
+		ret, err := do(string(buff), server)
+		if v, ok := ret.(string); ok {
+			conn.Write([]byte(v))
+			fmt.Println([]byte(v))
+		}
+		conn.Close()
 	}
 }
 
-func do(pro string, server *RedisServer) {
-	argv, argc := protocol.Protocol2Args(pro)
-	if argc == 3 && 0 == strings.Compare(argv[0], "set") {
-		setCommand(server, argv[1], argv[2])
-	} else if argc == 3 && 0 == strings.Compare(argv[0], "get") {
-		get := getCommand(server, argv[1])
-		fmt.Println("get result ", get)
-	}
-}
-
-func setCommand(server *RedisServer, key string, value interface{}) {
+func setCommand(server *RedisServer, key string, value interface{}) error {
 	server.db.Dict[key] = value
-	fmt.Println(server.db.Dict, "server stat now in func do")
+	fmt.Println(server.db.Dict, "server stat now in func setCommand", key, value)
+	return nil
 }
-func getCommand(server *RedisServer, key string) interface{} {
+func getCommand(server *RedisServer, key string) (interface{}, error) {
 	v, ok := server.db.Dict[key]
 	if !ok {
-		return nil
+		return nil, nil
 	}
-	return v
-}
-
-func start() *db.RedisDb {
-	db := db.InitDb()
-	return db
+	return v, nil
 }
 
 func sig(c chan os.Signal) {
@@ -107,4 +99,50 @@ func ExitFunc() {
 	fmt.Println("执行清理...")
 	fmt.Println("结束退出...")
 	os.Exit(0)
+}
+func start() {
+	fmt.Println("hello godis")
+}
+
+func initServer() *RedisServer {
+	server := new(RedisServer)
+	server.db = db.InitDb()
+	loadData(server)
+	log.Println("server load data fin, ok")
+	return server
+	//server.AofBuf =
+}
+
+func loadData(server *RedisServer) {
+	log.Println("file data loading ...")
+	fileName := "/Users/zhen/go/dump.rdb"
+	pros := aof.FileToPro(fileName)
+	//log.Println(pros, len(pros));os.Exit(0)
+	for _, v := range pros {
+		do(v, server)
+	}
+	log.Println("file data loading fin, ok")
+}
+func do(pro string, server *RedisServer) (retv interface{}, err error) {
+	argv, argc := protocol.Protocol2Args(pro)
+	log.Println("in func do *******", argv, argc)
+	if argc == 0 {
+		log.Println("failed of do, pro: ", pro)
+	} else {
+		log.Println("file data loading result", pro, argv, argc)
+		if argc == 3 && 0 == strings.Compare(argv[0], "set") {
+			err := setCommand(server, argv[1], argv[2])
+			aof.AppendToFile("godis.rdb", pro)
+			if err == nil {
+				return retv, nil
+			}
+		} else if argc == 3 && 0 == strings.Compare(argv[0], "get") {
+			retv, err := getCommand(server, argv[1])
+			fmt.Println("get result ", retv)
+			if err == nil {
+				return retv, nil
+			}
+		}
+	}
+	return nil, err
 }
