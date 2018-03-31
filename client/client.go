@@ -1,23 +1,25 @@
-package client
+package main
 
 import (
 	"bufio"
 	"fmt"
 	"godis/command"
 	"godis/protocol"
+	"io/ioutil"
 	"log"
 	"net"
 	"os"
 	"strings"
 )
 
-//GodisCliend connect client
+//GodisClient connect client
 type GodisClient struct {
 	Cmd  *command.GodisCommand
 	Argv []string
 	Argc int
 }
 
+//InitClient init client
 func InitClient(argv []string, argc int) GodisClient {
 	//cmd = command.Search(argv[0])
 	cmd := command.InitCommand(argv, argc)
@@ -40,24 +42,38 @@ func main() {
 		text = strings.Replace(text, "\n", "", -1)
 		pro := protocol.Cmd2Protocol(text)
 		//fmt.Println(pro)
+		tcpAddr, err := net.ResolveTCPAddr("tcp4", server)
+		if err != nil {
+			log.Print("conn err, clent")
+		}
+		conn, err := net.DialTCP("tcp", nil, tcpAddr)
+		if err != nil {
+			fmt.Println(tcpAddr, "client failed", conn, err)
+		}
 		//validation of pro
-		sendPro2Server(pro, server)
+		sendPro2Server(pro, server, conn)
+		// take response of server
+		result, err := ioutil.ReadAll(conn)
+		checkError(err)
+		//fmt.Println("result ", string(result))
+		if len(result) == 0 {
+			fmt.Println(server+"> ", "nil")
+		} else {
+			fmt.Println(server+">", string(result))
+		}
 
 		//if strings.Compare("exit" text) == 0 {}
 	}
 
 }
-func sendPro2Server(pro string, server string) (err error) {
-	tcpAddr, err := net.ResolveTCPAddr("tcp4", server)
-	if err != nil {
-		log.Print("conn err, clent")
-	}
-	conn, err := net.DialTCP("tcp", nil, tcpAddr)
-	if err != nil {
-		fmt.Println(tcpAddr, "client failed", conn, err)
-		return err
-	}
+func sendPro2Server(pro string, server string, conn net.Conn) (err error) {
 	data := []byte(pro)
 	conn.Write(data)
 	return nil
+}
+func checkError(err error) {
+	if err != nil {
+		log.Println("socket error: ", err.Error())
+		os.Exit(1)
+	}
 }
