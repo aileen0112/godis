@@ -42,15 +42,22 @@ func FileToPro(fileName string) []string {
 	}
 	//ret := bytes.Split(content, []byte("*"))
 	ret := bytes.Split(content, []byte{'*'})
-	pros := make([]string, len(ret)-1)
+	//pros := make([]string, len(ret)-1)
+	var pros = make([]string, len(ret)-1)
 	for k, v := range ret[1:] {
-		log.Println("split result", k, v)
-		tmp := append([]byte{'*'}, v...)
-		log.Println("convert result", tmp)
-		pros = append(pros, "*"+string(v))
-		log.Println("string result", pros[k])
+		v := append(v[:0], append([]byte{'*'}, v[0:]...)...)
+		//log.Println("convert result", tmp)
+		pros[k] = string(v)
 	}
-	os.Exit(0)
+	log.Println(len(pros), len(ret[1:]))
+	/*
+		for k, v := range pros {
+			tmp := []byte(v)
+			log.Println("--------", k)
+			log.Println("--------", len(tmp), []byte(v))
+		}
+	*/
+	//os.Exit(0)
 	return pros
 }
 
