@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"godis/aof"
 	"godis/db"
+	"godis/info"
 	"godis/protocol"
 	"log"
 	"net"
@@ -11,12 +12,15 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 )
 
 //RedisServer struct
 type RedisServer struct {
-	db     *db.RedisDb
-	dbnum  int
+	db    *db.RedisDb
+	dbnum int
+	start int64
+	//info   map[string]interface{}
 	AofBuf []string
 }
 
@@ -59,6 +63,8 @@ func handler(conn net.Conn, server *RedisServer) {
 		if v, ok := ret.(string); ok {
 			conn.Write([]byte(v))
 			fmt.Println([]byte(v))
+		} else {
+
 		}
 		conn.Close()
 	}
@@ -69,6 +75,13 @@ func setCommand(server *RedisServer, key string, value interface{}) error {
 	fmt.Println(server.db.Dict, "server stat now in func setCommand", key, value)
 	return nil
 }
+func infoCommand(server *RedisServer) (map[string]map[string]string, error) {
+	serverInfo := info.GetServer()
+	info := make(map[string]map[string]string)
+	info["server"] = serverInfo
+	return info, nil
+}
+
 func getCommand(server *RedisServer, key string) (interface{}, error) {
 	v, ok := server.db.Dict[key]
 	if !ok {
@@ -107,6 +120,7 @@ func start() {
 func initServer() *RedisServer {
 	server := new(RedisServer)
 	server.db = db.InitDb()
+	server.start = time.Now().UnixNano() / 1000000
 	loadData(server)
 	log.Println("server load data fin, ok")
 	return server
@@ -134,7 +148,7 @@ func do(pro string, server *RedisServer) (retv interface{}, err error) {
 			err := setCommand(server, argv[1], argv[2])
 			aof.AppendToFile("godis.rdb", pro)
 			if err == nil {
-				return retv, nil
+				return 1, nil
 			}
 		} else if argc == 3 && 0 == strings.Compare(argv[0], "get") {
 			retv, err := getCommand(server, argv[1])
@@ -142,7 +156,29 @@ func do(pro string, server *RedisServer) (retv interface{}, err error) {
 			if err == nil {
 				return retv, nil
 			}
+		} else if argc == 1 && 0 == strings.Compare(argv[0], "info") {
+			retv, err := infoCommand(server)
+			if err == nil {
+				var outBuf string
+				for k, v := range retv {
+					outBuf += "\n# " + strings.ToUpper(k) + "\n"
+					//fmt.Println("# ", strings.ToUpper(k))
+					for innerk, innerv := range v {
+						outBuf += innerk + ":" + innerv + "\n"
+						//fmt.Println(innerk, ":", innerv)
+					}
+				}
+				return outBuf, nil
+			}
 		}
 	}
 	return nil, err
+}
+func liveSeconds(server RedisServer) int64 {
+	secM := time.Now().UnixNano()/1000000 - server.start
+	return secM / 1000
+}
+func liveDays(server RedisServer) int64 {
+	secM := time.Now().UnixNano()/1000000 - server.start
+	return secM / 1000 / 86400
 }
