@@ -5,6 +5,8 @@ import (
 	"godis/aof"
 	"godis/db"
 	"godis/info"
+	"godis/list"
+	"godis/object"
 	"godis/protocol"
 	"log"
 	"net"
@@ -181,4 +183,14 @@ func liveSeconds(server RedisServer) int64 {
 func liveDays(server RedisServer) int64 {
 	secM := time.Now().UnixNano()/1000000 - server.start
 	return secM / 1000 / 86400
+}
+func lpushCommand(server *RedisServer, key string, value interface{}) error {
+	list := list.Create()
+	list.AddHead(value)
+	obj := new(object.RedisObject)
+	obj.ObjectType = 2
+	obj.Ptr = list
+	server.db.Dict[key] = obj
+	fmt.Println(server.db.Dict, "server stat now in func lpushCommand", key, value)
+	return nil
 }
