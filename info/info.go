@@ -1,15 +1,10 @@
 package info
 
 import (
+	"godis/server"
 	"os"
 	"strconv"
 )
-
-//TCPIP ip
-const TCPIP = "127.0.0.1"
-
-//TCPPORT port
-const TCPPORT = 2046
 
 //GetServer server section of info cmd
 func GetServer() map[string]string {
@@ -25,5 +20,8 @@ func getPid() int {
 	return os.Getpid()
 }
 func getPort() int {
-	return TCPPORT
+	return server.TCPPORT
+}
+func getIP() string {
+	return server.TCPIP
 }

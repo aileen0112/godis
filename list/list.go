@@ -35,8 +35,10 @@ func (l *List) insert(e, at *Element) *Element {
 	at.next = e
 	e.next = n
 	e.prev = at
-	n.prev = e
-	e.list = l
+	if n != nil {
+		n.prev = e
+		e.list = l
+	}
 	l.Len++
 	return e
 }
