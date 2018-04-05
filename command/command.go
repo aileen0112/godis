@@ -56,6 +56,17 @@ func LpushCommand(server *server.RedisServer, key string, value interface{}) err
 	obj.ObjectType = 2
 	obj.Ptr = list
 	server.Db.Dict[key] = obj
-	fmt.Println(server.Db.Dict, "server stat now in func lpushCommand", key, value, server.Db.Dict)
+	fmt.Println(server.Db.Dict, "server stat now in func lpushCommand", key, value)
 	return nil
+}
+
+// Llen len of list
+func Llen(server *server.RedisServer, key string) int {
+	if v, ok := server.Db.Dict[key]; ok {
+		if vl, o := v.(*object.RedisObject); o {
+			fmt.Println("llen command ", v.(*object.RedisObject).ObjectType)
+			return vl.Ptr.(*list.List).Len
+		}
+	}
+	return -1
 }
