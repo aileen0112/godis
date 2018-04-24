@@ -2,7 +2,7 @@ package server
 
 import (
 	"fmt"
-	"godis_back/list"
+	"godis/list"
 	"log"
 	"os"
 )

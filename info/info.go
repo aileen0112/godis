@@ -1,7 +1,6 @@
 package info
 
 import (
-	"godis/server"
 	"os"
 	"strconv"
 )
@@ -20,8 +19,8 @@ func getPid() int {
 	return os.Getpid()
 }
 func getPort() int {
-	return server.TCPPORT
+	return 9736
 }
 func getIP() string {
-	return server.TCPIP
+	return "127.0.0.1"
 }
