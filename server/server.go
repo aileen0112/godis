@@ -49,7 +49,7 @@ type Server struct {
 	SystemMemorySize int32
 	Clients          int32
 	Pid              int32
-	commands         map[string]GodisCommand
+	Commands         map[string]*GodisCommand
 	//AofBuf           string
 	//info   map[string]interface{}
 	AofBuf []string
@@ -65,25 +65,12 @@ type GodisDb struct {
 	ID      int32
 }
 
-/*
-func SetCommand(argv []string, argc int) {
-	if v := argv[0]; strings.Compare(v, "set") != 0 {
-		fmt.Println("error set command")
-	}
-	//key := argv[1]
-	fmt.Println(argv, argc, "setcommand")
-}
-*/
-
 // SetSet cmd get
 func SetSet() {
 	fmt.Println("hello setset")
 }
 
 //func processCommand(c *Client) {}
-
-// cmd map
-//var cmdMap = map[string]cmdFunc{"set": SetCommand, "get": GetCommand}
 
 /*
 // InitCommand func
@@ -101,10 +88,23 @@ func InitCommand(argv []string, argc int) *GodisCommand {
 */
 
 // SetCommand cmd of set
-func SetCommand(key string, value interface{}) error {
-	//server.Db.Dict[key] = value
-	fmt.Println("server in func setCommand", key, value)
-	return nil
+func SetCommand(c *Client, s *Server) {
+	objKey := c.Argv[1]
+	objValue := c.Argv[2]
+	if stringKey, ok1 := objKey.Ptr.(string); ok1 {
+		if stringValue, ok2 := objValue.Ptr.(string); ok2 {
+			c.Db.Dict[stringKey] = stringObject(stringValue)
+		}
+	}
+	addReply(c, objKey)
+	//server.Db.Dict[key] = stringObject(string(objValue.Ptr)
+	fmt.Println("func setCommand", c.Db, s.Db[0])
+}
+func stringObject(s string) (o *GodisObject) {
+	o = new(GodisObject)
+	o.ObjectType = 0
+	o.Ptr = s
+	return o
 }
 
 // Search cmd of search
@@ -142,27 +142,41 @@ func ProcessCommand(c *Client, s *Server) {
 		log.Println("error cmd")
 		os.Exit(1)
 	}
-	c.Cmd = lookupCommand(name, s)
-	call(c, s)
+	cmd := lookupCommand(name, s)
+	fmt.Println("lookup result ", cmd)
+	if cmd != nil {
+		c.Cmd = cmd
+		fmt.Println("ProcessCommand", c.Cmd, s.Db)
+		call(c, s)
+	}
 }
 func lookupCommand(name string, s *Server) *GodisCommand {
-	if cmd, ok := s.commands[name]; ok {
-		return &cmd
+	fmt.Println("lookupCommand", name, s.Commands)
+	if cmd, ok := s.Commands[name]; ok {
+		return cmd
 	}
 	return nil
 }
 func call(c *Client, s *Server) {
+	fmt.Println("server call ", c.Cmd.Name, c.Cmd.Proc, s.Db)
 	c.Cmd.Proc(c, s)
 }
 
 //GetCommand get
 func GetCommand(c *Client, s *Server) {
 	o := lookupKey(c.Db, c.Argv[1])
-	addReply(c, o)
+	fmt.Println("GetCommand ", o)
+	if o != nil {
+		addReply(c, o)
+	} else {
+		addReplyNil(c)
+	}
 }
 func lookupKey(db *GodisDb, key *GodisObject) (ret *GodisObject) {
 	o, ok := db.Dict[key.Ptr.(string)]
-	if !ok {
+	fmt.Println("lookupKey ", o, ok, db.Dict, key.Ptr)
+	if ok {
+		fmt.Println("ok, key exist ", o)
 		return o
 	}
 	return nil
@@ -181,4 +195,7 @@ func Obj2Protocol(c *Client, o *GodisObject) {
 	} else {
 		c.Buf = "nil"
 	}
+}
+func addReplyNil(c *Client) {
+	c.Buf = "nil"
 }

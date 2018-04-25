@@ -1,12 +1,6 @@
 package command
 
-import (
-	"fmt"
-	"godis/list"
-	"godis/object"
-	"godis/server"
-	"strings"
-)
+/*
 
 //GodisCommand command struct
 type GodisCommand struct {
@@ -49,10 +43,10 @@ func Search(name string) cmdFunc {
 }
 
 // LpushCommand lpush command
-func LpushCommand(server *server.RedisServer, key string, value interface{}) error {
+func LpushCommand(server *server.Server, key string, value interface{}) error {
 	list := list.Create()
 	list.AddHead(value)
-	obj := new(object.RedisObject)
+	obj := new(object.GodisObject)
 	obj.ObjectType = 2
 	obj.Ptr = list
 	server.Db.Dict[key] = obj
@@ -61,7 +55,7 @@ func LpushCommand(server *server.RedisServer, key string, value interface{}) err
 }
 
 // Llen len of list
-func Llen(server *server.RedisServer, key string) int {
+func Llen(server *server.Server, key string) int {
 	if v, ok := server.Db.Dict[key]; ok {
 		if vl, o := v.(*object.RedisObject); o {
 			fmt.Println("llen command ", v.(*object.RedisObject).ObjectType)
@@ -70,3 +64,4 @@ func Llen(server *server.RedisServer, key string) int {
 	}
 	return -1
 }
+*/

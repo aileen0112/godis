@@ -3,8 +3,8 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"godis/command"
 	"godis/protocol"
+	"godis/server"
 	"io/ioutil"
 	"log"
 	"net"
@@ -14,12 +14,12 @@ import (
 
 //GodisClient connect client
 type GodisClient struct {
-	Cmd  *command.GodisCommand
+	Cmd  *server.GodisCommand
 	Argv []string
 	Argc int
 }
 
-//InitClient init client
+/*
 func InitClient(argv []string, argc int) GodisClient {
 	//cmd = command.Search(argv[0])
 	cmd := command.InitCommand(argv, argc)
@@ -27,13 +27,13 @@ func InitClient(argv []string, argc int) GodisClient {
 	client := GodisClient{cmd, argv, argc}
 	return client
 }
+*/
 
 func main() {
-	server := "127.0.0.1:2046"
+	server := "127.0.0.1:9736"
 
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Println("Hi Godis")
-	//fmt.Println("********************")
 
 	for {
 		fmt.Print(server + "> ")

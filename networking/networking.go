@@ -1,9 +1,9 @@
 package networking
 
 import (
+	"fmt"
 	"godis/protocol"
 	"godis/server"
-	"log"
 	"net"
 )
 
@@ -13,21 +13,17 @@ type ClientPointer *server.Client
 // ProcessEvents process event
 func ProcessEvents(conn net.Conn, s *server.Server) {
 	c := createClient(conn, s)
-	buff := make([]byte, 1024)
-	defer conn.Close()
-	for {
-		n, err := conn.Read(buff)
-		if err != nil {
-			return
-		}
-		readQueryFromClient(c, conn, s)
-		writeToClient(conn, c)
-		log.Println("read from client bytes", n)
-	}
+	fmt.Println("createClient ", c)
+	fmt.Println("begin handle loop **********", c)
+	readQueryFromClient(c, conn, s)
+	fmt.Println("readQueryFromClient ", c)
+	writeToClient(conn, c)
+	fmt.Println("writeToClient ", c)
+	//log.Println("read from client bytes", n)
 }
 func createClient(conn net.Conn, s *server.Server) (c *server.Client) {
 	c = new(server.Client)
-	selectDb(c, 1, s)
+	selectDb(c, 0, s)
 	//id := atomicGetIncr(s.NextClientID,client_id,1)
 	id := 1
 	c.ID = int32(id)
@@ -48,7 +44,8 @@ func readQueryFromClient(c ClientPointer, conn net.Conn, s *server.Server) {
 	if err != nil {
 		return
 	}
-	log.Println(n, conn.RemoteAddr().String(), conn.LocalAddr().String(), string(buff))
+	fmt.Println(n, conn.RemoteAddr().String(), conn.LocalAddr().String(), string(buff))
+	//log.Println(n, conn.RemoteAddr().String(), conn.LocalAddr().String(), string(buff))
 	c.QueryBuf = string(buff)
 	//命令处理
 	processInputBuffer(c, s)
@@ -77,4 +74,5 @@ func stringObject(s string) (o *server.GodisObject) {
 
 func writeToClient(conn net.Conn, c *server.Client) {
 	conn.Write([]byte(c.Buf))
+	defer conn.Close()
 }

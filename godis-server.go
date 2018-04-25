@@ -10,6 +10,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 )
@@ -26,8 +27,12 @@ const ConfigDefaultDBNum = 16
 // ConfigDefaultServerPort port
 const ConfigDefaultServerPort = 9736
 
+// ConfigDefaultDir working dir
+const ConfigDefaultDir = "/tmp/"
+
 func initDb() {
 	fmt.Println("init db begin-->")
+	godis.Db = make([]*server.GodisDb, godis.DbNum)
 	for i := 0; i < godis.DbNum; i++ {
 		godis.Db[i] = new(server.GodisDb)
 		godis.Db[i].Dict = make(map[string]*server.GodisObject, 100)
@@ -71,9 +76,9 @@ func main() {
 	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGUSR1, syscall.SIGUSR2)
 	go sigHandler(c)
 
-	netListen, err := net.Listen("tcp", "127.0.0.1:"+string(ConfigDefaultServerPort))
+	netListen, err := net.Listen("tcp", "127.0.0.1:"+strconv.Itoa(ConfigDefaultServerPort))
 	if err != nil {
-		log.Print("listen err")
+		log.Print("listen err ", "127.0.0.1:"+strconv.Itoa(ConfigDefaultServerPort))
 	}
 	//checkError(err)
 	defer netListen.Close()
@@ -154,8 +159,8 @@ func start() {
 func initServerConfig() {
 	godis.Port = ConfigDefaultServerPort
 	godis.DbNum = ConfigDefaultDBNum
-	godis.RdbFilename = ConfigDefaultRdbFilename
-	godis.AofFilename = ConfigDefaultAofFilename
+	godis.RdbFilename = ConfigDefaultDir + ConfigDefaultRdbFilename
+	godis.AofFilename = ConfigDefaultDir + ConfigDefaultAofFilename
 	godis.NextClientID = 1 /* Client IDs, start from 1 .*/
 }
 func initServer() {
@@ -167,6 +172,20 @@ func initServer() {
 
 	//server.Db = db.InitDb()
 	godis.Start = time.Now().UnixNano() / 1000000
+	//var getf server.CmdFun
+
+	type cmdFunc func(c *server.Client, s *server.Server)
+	var gcc cmdFunc
+	gcc = server.GetCommand
+	fmt.Println(gcc)
+	getCommand := &server.GodisCommand{Name: "get", Proc: server.GetCommand, Arity: -2}
+	setCommand := &server.GodisCommand{Name: "set", Proc: server.SetCommand, Arity: -3}
+	//getCommand := &server.GodisObject{ObjectType: 1, Ptr: gcc}
+	//getV := map[string]*server.GodisCommand{}
+	godis.Commands = map[string]*server.GodisCommand{
+		"get": getCommand,
+		"set": setCommand,
+	}
 	//loadData()
 	log.Println("server load data fin, ok")
 	//server.AofBuf =
