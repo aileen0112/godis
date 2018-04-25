@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"godis/aof"
 	"godis/list"
 	"log"
 	"os"
@@ -160,6 +161,7 @@ func lookupCommand(name string, s *Server) *GodisCommand {
 func call(c *Client, s *Server) {
 	fmt.Println("server call ", c.Cmd.Name, c.Cmd.Proc, s.Db)
 	c.Cmd.Proc(c, s)
+	aof.AppendToFile(s.AofFilename, c.QueryBuf)
 }
 
 //GetCommand get
