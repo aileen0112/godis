@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"godis/aof"
 	"godis/info"
 	"godis/networking"
 	"godis/server"
@@ -69,6 +68,7 @@ func main() {
 	initServerConfig()
 	initServer()
 	initDb()
+	networking.LoadData(godis)
 	log.Println("server init fin, ok", godis)
 
 	c := make(chan os.Signal)
@@ -186,12 +186,13 @@ func initServer() {
 		"get": getCommand,
 		"set": setCommand,
 	}
-	//loadData()
 	log.Println("server load data fin, ok")
 	//server.AofBuf =
 }
 
+/*
 func loadData() {
+	c := networking.
 	log.Println("file data loading ...")
 	prefix := "/tmp/"
 	pros := aof.FileToPro(prefix + ConfigDefaultAofFilename)
@@ -202,6 +203,7 @@ func loadData() {
 	}
 	log.Println("file data loading fin, ok")
 }
+*/
 func liveSeconds(server server.Server) int64 {
 	secM := time.Now().UnixNano()/1000000 - server.Start
 	return secM / 1000

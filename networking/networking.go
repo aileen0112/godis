@@ -2,8 +2,10 @@ package networking
 
 import (
 	"fmt"
+	"godis/aof"
 	"godis/protocol"
 	"godis/server"
+	"log"
 	"net"
 )
 
@@ -21,6 +23,16 @@ func ProcessEvents(conn net.Conn, s *server.Server) {
 	fmt.Println("writeToClient ", c)
 	//log.Println("read from client bytes", n)
 }
+func createFakeClient(s *server.Server) (c *server.Client) {
+	c = new(server.Client)
+	selectDb(c, 0, s)
+	//id := atomicGetIncr(s.NextClientID,client_id,1)
+	id := 1
+	c.ID = int32(id)
+	c.QueryBuf = ""
+	return c
+}
+
 func createClient(conn net.Conn, s *server.Server) (c *server.Client) {
 	c = new(server.Client)
 	selectDb(c, 0, s)
@@ -75,4 +87,20 @@ func stringObject(s string) (o *server.GodisObject) {
 func writeToClient(conn net.Conn, c *server.Client) {
 	conn.Write([]byte(c.Buf))
 	defer conn.Close()
+}
+
+// LoadData from aof file
+func LoadData(s *server.Server) {
+	log.Println("file data loading ...")
+	c := createFakeClient(s)
+	fmt.Println("readQueryFromClient ", c)
+	pros := aof.FileToPro(s.AofFilename)
+	//log.Println(pros, len(pros));os.Exit(0)
+	for _, v := range pros {
+		c.QueryBuf = string(v)
+		//命令处理
+		processInputBuffer(c, s)
+		log.Println("loading... ", v)
+	}
+	log.Println("file data loading fin, ok")
 }
